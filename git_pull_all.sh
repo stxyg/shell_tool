@@ -4,53 +4,56 @@
 pull(){
 	for  i in $1; do
 		if [ -d $i ]; then
-			cd $i
-			# 判断是不是git项目
-	        if contains; then
-				echo "切换目录到:【`pwd`】,拉取代码..."
-				git pull 
-				# $@	
-			fi
+			getAllGitDirs $i
 		else
 			echo "目录【$i】不存在"
 		
 		fi
-			echo -e '\n'
+	done
+	# pull操作
+	for  i in ${gitdirs[*]}; do
+		cd $i
+		echo "切换目录到:【`pwd`】,拉取代码..."
+		git pull
+		echo -e '\n'
 	done
 }
 
-contains(){
+getAllGitDirs(){
+	# 打开目录
+	cd  $1
+	if [ `(ls -a | grep '\.git' | wc -l )` -gt 0 ]; then
+		# 存储git目录
+		gitdirs[${#gitdirs[*]}]=`pwd`
+		# 返回上级目录
+		cd ..
+		return 0
+	fi 	
+	
 	for file_name in `ls -a`; do
-		if [ -f ${file_name} ]; then
-			break
+		if [ -f ${file_name} -o  ${file_name} = "./" -o  ${file_name} = "../" ]; then
+			continue
 		fi
-    	if test ${file_name} = ".git/";then
-    		return 0
-    	elif [ ${file_name} != "./" -a  ${file_name} != "../" ]; then
-    		cd $file_name
-    		son_file_names=`ls -a`
-    		pull $son_file_names
-    		cd ..
-    	fi
-        continue	
-    done
+		#echo "当前目录：`pwd`,  文件目录： ${file_name}"
+		getAllGitDirs "${file_name}"
+	done
+	
     # 不是git项目
     return 1
 
 }
 
-# 定义目录（多个目录） 
-dirs=('/e' '/d')
+# 定义目录
+#  
+dirs=('/f/xxx' '/f/xx2')
 cur_dir=`pwd`
+#git目录
+gitdirs=()
 
 # 执行
 pull "${dirs[*]}"
+
 # 跳转回原目录
 cd $cur_dir
 
 echo  "返回原目录【${cur_dir}】,成功！"
-
-
-
-
-
